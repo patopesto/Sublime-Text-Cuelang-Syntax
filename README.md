@@ -1,6 +1,6 @@
 # Cuelang syntax
 
-Sublime Text 3 syntax hightling package for [CUE](https://cuelang.org/). 
+Sublime Text 3 syntax hightling package for [CUE](https://cuelang.org/).  
 File extension: `.cue` 
 
 ## Usage

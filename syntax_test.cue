@@ -13,7 +13,7 @@ package test
 //      ^ entity.name.namespace
 
 import "pkg/dev"
-// <- source.cue keyword.other.import
+// <- source.cue keyword.control.import
 
 import (
         "pkg/dev"
@@ -24,11 +24,24 @@ import (
 //              ^ string.quoted.double
 )
 
+
+// ********** Attributes **********
+@json(hello)
+// <- source.cue punctuation.definition.annotation
+// ^ meta.annotation.identifier
+//    ^ meta.annotation.parameters
+
+
 // ********** Literals **********
-true false null
+// It is technically to valid to have those here,
+// We are only detecting elements to highlight in the syntax parser, not parsing the full language as per the specification.
+
+true false null  _  _|_
 // <- source.cue constant.language
 //    ^ constant.language
 //          ^ constant.language
+//               ^ constant.language
+//                  ^ constant.language
 
 int uint8 string
 // <- source.cue support.type.builtin
@@ -44,7 +57,11 @@ name?: int
 // ^ keyword.operator
 //     ^ keyword.operator
 //        ^ keyword.operator
-
+for in if let
+// <- source.cue keyword.control
+//  ^ keyword.control
+//     ^ keyword.control
+//        ^ keyword.control
 
 // *** Strings ***
 "string"
@@ -115,40 +132,15 @@ Bytes multiline string
 // ^ constant.numeric.value
 
 
+// ********** Declarations **********
+net.IPv4
+// <- source.cue variable.other
 
+// *** Built-in functions ***
+len()
+// <- meta.function-call support.function
 
+// *** Functions ***
+hello(abc)
+// <- meta.function-call variable.function
 
-// Special field name (and a comment)
-"k8s.io/annotation": "secure-me"
-
-// lists can have different element types
-list: [
-    "a", "b", "c",
-    1,
-    2,
-    3,
-]
-
-obj: {
-    foo: "bar"
-    // reuse another field?!
-    L: list
-}
-
-name: int & <= 100 | *1
-
-
-
-#Permissions: {
-    role:   string
-    public: bool | *false
-}
-
-a: {
-    foo:      string  // foo is a string
-    [=~"^i"]: int     // all other fields starting with i are integers
-    [=~"^b"]: bool    // all other fields starting with b are booleans
-    [>"c"]:   string  // all other fields lexically after c are strings
-
-    ...string         // all other fields must be a string. Note: default constraints are not yet implemented.
-}

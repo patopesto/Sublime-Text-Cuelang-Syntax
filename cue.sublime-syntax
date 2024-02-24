@@ -13,10 +13,11 @@ variables:
   letter: '[[:alpha:]|_|\$]'
   identifier: '[#|_#]?{{letter}}[{{letter}}|[:digit:]]*'
 
-  predeclared_values: (null|true|false|_\|_|_)
-  predeclared_func: (len|close|and|or)
+  predeclared_values: (null|true|false|_\|_|_) # with "_" as the Top value and "_|_" as the Bottom value
+  predeclared_func: (len|close|and|or|div|mod|quo|rem)
   predeclared_types: (null|bool|int|float|string|bytes)
   predeclared_derived_types: (number|uint|uint8|int8|uint16|int16|rune|uint32|int32|uint64|int64|uint128|int128|float32|float64)
+  comprehension_keywords: (for|in|if|let)
 
   operators: (\||&|\|\||&&|==|!=|<=|<|>=|>|=~|!~|\+|-|\*|/|!)
 
@@ -26,7 +27,6 @@ variables:
   bin_digits: (?:_?[01]+(?:_[01]+)*)
   dec_multiplier: "(?:(K|M|G|T|P)i*)"
   dec_exponent: '(?:[eE][-+]?{{dec_digits}}*)'
-
 
   ### Notes from the specs documentation of CUE's EBNF syntax:
   # |   alternation
@@ -39,10 +39,25 @@ contexts:
     - include: comments
 
   main:
+    # File's Preambule
+    - include: attributes
     - include: packages
     - include: imports
-    - include: literals
 
+    # Rest of the file
+    - include: literals
+    - include: declarations
+
+
+  attributes:
+    - match: '@'
+      scope: punctuation.definition.annotation.cue
+      push:
+        - match: '{{identifier}}'
+          scope: meta.annotation.identifier.cue entity.name.tag
+        - match: '\((.*)\)'
+          scope: meta.annotation.parameters.cue
+          pop: true
 
   packages:
     - match: \bpackage\b
@@ -55,7 +70,25 @@ contexts:
 
   imports:
     - match: \bimport\b
-      scope:  keyword.other.import.cue
+      scope: keyword.control.import.cue
+
+
+  # Very minimal parsing of declarations to only find elements we want to hightlight
+  declarations: 
+    - match: '{{predeclared_func}}(?=\()' #Look-ahead to open parentheses
+      scope: support.function.cue
+      push:
+        - meta_scope: meta.function-call.cue
+        - match: \)
+          pop: true
+    - match: '{{identifier}}(?=\()' #Look-ahead to open parentheses
+      scope: variable.function.cue
+      push:
+        - meta_scope: meta.function-call.cue
+        - match: \)
+          pop: true
+    - match: \b{{identifier}}\b
+      scope: variable.other.cue
 
 
   literals:
@@ -65,6 +98,8 @@ contexts:
       scope: support.type.builtin.cue
     - match: \b{{predeclared_derived_types}}\b
       scope: support.type.builtin.cue
+    - match: \b{{comprehension_keywords}}\b
+      scope: keyword.control.cue
     - match: '{{operators}}'
       scope: keyword.operator.cue
     - include: strings
