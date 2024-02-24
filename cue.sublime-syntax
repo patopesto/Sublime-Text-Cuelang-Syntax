@@ -1,0 +1,237 @@
+%YAML 1.2
+---
+# Sublime syntax files documentation: http://www.sublimetext.com/docs/syntax.html
+# Based on CUE v0.7.0 specifications documentation
+
+name: CUE
+file_extensions:
+  - cue
+version: 2
+scope: source.cue
+
+variables:
+  letter: '[[:alpha:]|_|\$]'
+  identifier: '[#|_#]?{{letter}}[{{letter}}|[:digit:]]*'
+
+  predeclared_values: (null|true|false|_\|_|_)
+  predeclared_func: (len|close|and|or)
+  predeclared_types: (null|bool|int|float|string|bytes)
+  predeclared_derived_types: (number|uint|uint8|int8|uint16|int16|rune|uint32|int32|uint64|int64|uint128|int128|float32|float64)
+
+  operators: (\||&|\|\||&&|==|!=|<=|<|>=|>|=~|!~|\+|-|\*|/|!)
+
+  dec_digits: (?:\d+(?:_\d+)*)
+  hex_digits: (?:_?\h+(?:_\h+)*)
+  oct_digits: (?:_?[0-7]+(?:_[0-7]+)*)
+  bin_digits: (?:_?[01]+(?:_[01]+)*)
+  dec_multiplier: "(?:(K|M|G|T|P)i*)"
+  dec_exponent: '(?:[eE][-+]?{{dec_digits}}*)'
+
+
+  ### Notes from the specs documentation of CUE's EBNF syntax:
+  # |   alternation
+  # ()  grouping
+  # [] : ??  option (0 or 1 times)
+  # {} : *  repetition (0 to n times)
+
+contexts:
+  prototype:
+    - include: comments
+
+  main:
+    - include: packages
+    - include: imports
+    - include: literals
+
+
+  packages:
+    - match: \bpackage\b
+      scope: keyword.declaration.namespace.cue
+      push:
+        - meta_scope: meta.namespace.cue
+        - match: \b{{identifier}}\b
+          scope: entity.name.namespace.cue
+          pop: true
+
+  imports:
+    - match: \bimport\b
+      scope:  keyword.other.import.cue
+
+
+  literals:
+    - match: \b{{predeclared_values}}\b
+      scope: constant.language.cue
+    - match: \b{{predeclared_types}}\b
+      scope: support.type.builtin.cue
+    - match: \b{{predeclared_derived_types}}\b
+      scope: support.type.builtin.cue
+    - match: '{{operators}}'
+      scope: keyword.operator.cue
+    - include: strings
+    - include: numbers
+
+  # https://cuelang.org/docs/references/spec/#numeric-literals
+  numbers:
+    - include: octal-integer
+    - include: hex-integer
+    - include: binary-integer
+    - include: decimal-integer
+    - include: floats
+
+  octal-integer:
+    - match: (0o)({{oct_digits}})
+      scope: meta.number.integer.octal.cue
+      captures:
+        1: constant.numeric.base.cue
+        2: constant.numeric.value.cue
+
+  hex-integer:
+    - match: (0[xX])({{hex_digits}})
+      scope: meta.number.integer.hexadecimal.cue
+      captures:
+        1: constant.numeric.base.cue
+        2: constant.numeric.value.cue
+
+  binary-integer:
+    - match: (0b)({{bin_digits}})
+      scope: meta.number.integer.binary.cue
+      captures:
+        1: constant.numeric.base.cue
+        2: constant.numeric.value.cue
+
+  decimal-integer:
+    - match: |-
+        (?x:
+          # 1K, 2.3K
+          {{dec_digits}}(\.{{dec_digits}})??{{dec_multiplier}}
+          # 1, 01, 1_2,
+          | {{dec_digits}}(?!\.)
+          # .1K, .2Mi
+          | (\.){{dec_digits}}{{dec_multiplier}}
+        )
+      scope: meta.number.integer.decimal.cue constant.numeric.value.cue
+      captures:
+        1: punctuation.separator.decimal.cue
+        2: punctuation.separator.decimal.cue
+        3: punctuation.separator.decimal.cue
+
+  floats:
+    - match: |-
+        (?x:
+          # 1.1, 1., 1.1e1, 1.e1
+          {{dec_digits}}(\.){{dec_digits}}?{{dec_exponent}}?
+          # 1e1
+          | {{dec_digits}}{{dec_exponent}}
+          # .1, .1e1
+          | (\.){{dec_digits}}{{dec_exponent}}?
+        )
+      scope: meta.number.float.decimal.cue constant.numeric.value.cue
+      captures:
+        1: punctuation.separator.decimal.cue
+        2: punctuation.separator.decimal.cue
+
+
+  # https://cuelang.org/docs/references/spec/#string-and-byte-sequence-literals
+  strings:
+    - include: simple-strings-multiline
+    - include: simple-strings
+    - include: simple-bytes-multiline
+    - include: simple-bytes
+    - include: strings-raw
+
+  simple-strings: #https://cuetorials.com/overview/types-and-values/#strings
+    - match: \"
+      scope: punctuation.definition.string.begin.cue
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.cue string.quoted.double.cue
+        - include: string-content
+        - match: \"
+          scope: punctuation.definition.string.end.cue
+          pop: true
+
+  simple-bytes: #https://cuetorials.com/overview/types-and-values/#bytes
+    - match: \'
+      scope: punctuation.definition.string.begin.cue
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.cue string.quoted.single.cue
+        - include: string-content
+        - include: string-bytes-content
+        - match: \'
+          scope: punctuation.definition.string.end.cue
+          pop: true
+
+  simple-strings-multiline: #https://cuetorials.com/overview/types-and-values/#strings
+    - match: '\"{3}\n'
+      scope: punctuation.definition.string.begin.cue
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.cue string.quoted.triple.cue
+        - include: string-content
+        - match: '\"{3}'
+          scope: punctuation.definition.string.end.cue
+          pop: true
+
+  simple-bytes-multiline: #https://cuetorials.com/overview/types-and-values/#strings
+    - match: \'{3}
+      scope: punctuation.definition.string.begin.cue
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.cue string.quoted.triple.cue
+        - include: string-content
+        - include: string-bytes-content
+        - match: \'{3}
+          scope: punctuation.definition.string.end.cue
+          pop: true
+
+  strings-raw:
+    - match: \#+(?=\"|\') #Look ahead to ensure it is a string
+      scope: punctuation.definition.string.begin.cue
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.cue string.quoted.other.cue
+        - match: \#+
+          scope: punctuation.definition.string.end.cue
+          pop: true
+
+  string-content:
+    - match: \\u#*\h{4}
+      scope: constant.character.escape.unicode.16bit.cue
+    - match: \\U#*\h{8}
+      scope: constant.character.escape.unicode.32bit.cue
+    - match: \\#*(a|b|f|n|r|t|v|/|\\|'|")
+      scope: constant.character.escape.cue
+    # Interpolation: https://cuetorials.com/overview/expressions/#interpolation
+    - match: \\#*\(
+      scope: punctuation.section.interpolation.begin.cue
+      push:
+        - meta_scope: meta.interpolation.cue
+        - meta_content_scope: source.cue.embedded
+        - clear_scopes: 1
+        - match: \)
+          scope: punctuation.section.interpolation.end.cue
+          pop: true
+
+  string-bytes-content:
+    - match: \\#*[0-7]{1,3}
+      scope: constant.character.escape.octal.cue
+    - match: \\x#*\h{2}
+      scope: constant.character.escape.hex.cue
+
+
+
+  comments:
+    # Comments begin with a '//' and finish at the end of the line
+    - match: '//'
+      scope: punctuation.definition.comment.cue
+      push:
+        - meta_scope: comment.line.cue
+        - include: line-ending
+
+  line-ending:
+    - match: $
+      pop: true
+
+
+
