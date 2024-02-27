@@ -11,7 +11,7 @@ scope: source.cue
 
 variables:
   letter: '[[:alpha:]|_|\$]'
-  identifier: '[#|_#]?{{letter}}[{{letter}}|[:digit:]]*'
+  identifier: '(#|_#)?{{letter}}[{{letter}}|[:digit:]]*'
 
   predeclared_values: (null|true|false|_\|_|_) # with "_" as the Top value and "_|_" as the Bottom value
   predeclared_func: (len|close|and|or|div|mod|quo|rem)
@@ -87,7 +87,7 @@ contexts:
         - meta_scope: meta.function-call.cue
         - match: \)
           pop: true
-    - match: \b{{identifier}}\b
+    - match: '{{identifier}}'
       scope: variable.other.cue
 
 

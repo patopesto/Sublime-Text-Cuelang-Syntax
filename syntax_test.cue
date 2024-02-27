@@ -136,6 +136,12 @@ Bytes multiline string
 net.IPv4
 // <- source.cue variable.other
 
+_test
+// <- source.cue variable.other
+
+_test
+// <- source.cue variable.other
+
 // *** Built-in functions ***
 len()
 // <- meta.function-call support.function
