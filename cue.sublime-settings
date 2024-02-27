@@ -1,0 +1,4 @@
+{
+    // Prefer tabs because cue fmt enforces tabs.
+    "translate_tabs_to_spaces": false,
+}
