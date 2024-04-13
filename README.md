@@ -1,6 +1,6 @@
 # Cuelang syntax
 
-Sublime Text 3 syntax hightling package for [CUE](https://cuelang.org/).  
+Sublime Text 4 syntax hightling package for [CUE](https://cuelang.org/).  
 File extension: `.cue` 
 
 ## Usage
@@ -10,7 +10,12 @@ Once installed, the `CUE` syntax will be available in the list of file.
 
 ## Installation
 
-This package is not in Package Control yet.  
+### Using Package Control
+
+If you have [Package Control](https://packagecontrol.io/installation) installed: `Command Palette` → `Install Package` → `PIO`
+
+### Manually
+
 Clone this repository in your local packages folder.  
 If you are unsure as to where your local packages directory is, please consult the [docs](https://docs.sublimetext.io/guide/getting-started/basic-concepts.html#the-data-directory).  
 
@@ -20,7 +25,6 @@ Example (on MacOS):
 cd ~/Library/Application\ Support/Sublime\ Text/Packages
 git clone git@gitlab.com:patopest/sublime-text-cuelang-syntax.git "Cuelang Syntax"
 ``` 
-
 
 ## Development
 
